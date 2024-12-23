@@ -55,7 +55,7 @@ public class GridManager : MonoBehaviour
     {
         if (tile != null) // Ensure the tile is properly initialized
         {
-            tile.SetTileType(TileState.TileType.Neutral);
+            tile.SetTileType(TileState.TileType.Unvisited);
         }
     }
 
