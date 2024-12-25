@@ -7,17 +7,21 @@ public class GridManager : MonoBehaviour
     public int gridHeight = 10;
     public float tileSpacing = 1.1f; // Spacing between tiles
 
-    private TileState[,] grid;
+    private TileState[,] _grid; // Grid data structure
+    private TileState _startTile; // Home tile
+    private TileState _targetTile; // Target tile
+    
 
     void Start()
     {
-        GenerateGrid();
-        RandomlySetTheBoard();
+        GenerateGrid(); // Generate the grid
+        RandomlySetTheBoard(); // Set the board logic
     }
 
+    // Generate the grid dynamically
     private void GenerateGrid()
     {
-        grid = new TileState[gridWidth, gridHeight];
+        _grid = new TileState[gridWidth, gridHeight];
 
         for (int x = 0; x < gridWidth; x++)
         {
@@ -30,83 +34,82 @@ public class GridManager : MonoBehaviour
                 // Set the parent in the hierarchy for better organization
                 tile.transform.parent = transform;
 
-                // Assign tile to the grid array
-                grid[x, y] = tile.GetComponent<TileState>();
+                // Assign tile to the grid array and set its initial state
+                TileState tileState = tile.GetComponent<TileState>();
+                if (tileState != null)
+                {
+                    tileState.GridPosition = new Vector2Int(x, y); // Assign grid position
+                    tileState.SetTileType(TileState.TileType.Unvisited); // Default state
+                }
+
+                // Add the tile to the grid array
+                _grid[x, y] = tileState;
             }
         }
     }
-
-    private void RandomlySetTileStates()
-    {
-        foreach (var tile in grid)
-        {
-            if (tile != null) // Ensure the tile is not null
-            {
-                // Randomly assign a TileType
-                tile.SetTileType((TileState.TileType)Random.Range(0, System.Enum.GetValues(typeof(TileState.TileType)).Length));
-            }
-        }
-    }
-
-    private void RandomlySetTheBoard()
-{
-    // Reset all tiles to the "Neutral" type
-    foreach (var tile in grid)
-    {
-        if (tile != null) // Ensure the tile is properly initialized
-        {
-            tile.SetTileType(TileState.TileType.Unvisited);
-        }
-    }
-
-    // Define the sides for "Home" and "Target"
-    bool isHorizontal = Random.Range(0, 2) == 0; // Randomly decide if alignment is horizontal or vertical
-
-    int homeX, homeY, targetX, targetY;
     
-    if (isHorizontal)
-    {
-        // Horizontal placement: Home on the left, Target on the right
-        homeX = 0; // Left-most column
-        homeY = Random.Range(0, grid.GetLength(1)); // Random row
-        targetX = grid.GetLength(0) - 1; // Right-most column
-        targetY = Random.Range(0, grid.GetLength(1)); // Random row
-    }
-    else
-    {
-        // Vertical placement: Home on the top, Target on the bottom
-        homeX = Random.Range(0, grid.GetLength(0)); // Random column
-        homeY = 0; // Top-most row
-        targetX = Random.Range(0, grid.GetLength(0)); // Random column
-        targetY = grid.GetLength(1) - 1; // Bottom-most row
-    }
 
-    // Set the Home and Target tiles
-    grid[homeX, homeY].SetTileType(TileState.TileType.Home);
-    grid[targetX, targetY].SetTileType(TileState.TileType.Target);
-
-    // Define the center of the grid for NoEntry tiles
-    int centerX = grid.GetLength(0) / 2;
-    int centerY = grid.GetLength(1) / 2;
-
-    // Align NoEntry tiles based on the Home-Target relationship
-    if (!isHorizontal)
+    // Randomly initialize the board setup
+    private void RandomlySetTheBoard()
     {
-        // Center-aligned "NoEntry" tiles horizontally
-        grid[centerX - 2, centerY].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX - 1, centerY].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX, centerY].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX + 1, centerY].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX + 2, centerY].SetTileType(TileState.TileType.NoEntry);
+        // Step 1: Reset all tiles to Unvisited
+        foreach (var tile in _grid)
+        {
+            if (tile != null)
+            {
+                tile.SetTileType(TileState.TileType.Unvisited);
+            }
+        }
+
+        // Step 2: Define Home and Target tiles
+        bool isHorizontal = Random.Range(0, 2) == 0;
+
+        int homeX, homeY, targetX, targetY;
+
+        if (isHorizontal)
+        {
+            homeX = 0;
+            homeY = Random.Range(0, gridHeight);
+            targetX = gridWidth - 1;
+            targetY = Random.Range(0, gridHeight);
+        }
+        else
+        {
+            homeX = Random.Range(0, gridWidth);
+            homeY = 0;
+            targetX = Random.Range(0, gridWidth);
+            targetY = gridHeight - 1;
+        }
+
+        _startTile = _grid[homeX, homeY];
+        _targetTile = _grid[targetX, targetY];
+
+        _startTile.SetTileType(TileState.TileType.Home);
+        _targetTile.SetTileType(TileState.TileType.Target);
+
+        // Step 3: Add NoEntry tiles near the center
+        int centerX = gridWidth / 2;
+        int centerY = gridHeight / 2;
+
+        if (isHorizontal)
+        {
+            for (int y = Mathf.Max(0, centerY - 2); y <= Mathf.Min(gridHeight - 1, centerY + 2); y++)
+            {
+                if (_grid[centerX, y] != null)
+                {
+                    _grid[centerX, y].SetTileType(TileState.TileType.NoEntry);
+                }
+            }
+        }
+        else
+        {
+            for (int x = Mathf.Max(0, centerX - 2); x <= Mathf.Min(gridWidth - 1, centerX + 2); x++)
+            {
+                if (_grid[x, centerY] != null)
+                {
+                    _grid[x, centerY].SetTileType(TileState.TileType.NoEntry);
+                }
+            }
+        }
     }
-    else
-    {
-        // Center-aligned "NoEntry" tiles vertically
-        grid[centerX, centerY - 2].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX, centerY - 1].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX, centerY].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX, centerY + 1].SetTileType(TileState.TileType.NoEntry);
-        grid[centerX, centerY + 2].SetTileType(TileState.TileType.NoEntry);
-    }
-}
 }
