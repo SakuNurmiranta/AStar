@@ -5,6 +5,7 @@ public class Program : MonoBehaviour
     private PathFinding _pathFinding;
     private TileState _homeTile;
     private TileState _targetTile;
+
     void Start()
     {
         // Find the GridManager in the scene
@@ -22,13 +23,25 @@ public class Program : MonoBehaviour
         Debug.Log("Calling RandomlySetTheBoard...");
         _gridManager.GetRandomlySetTheBoard()?.Invoke();
         
-        //Initialize PathFinding with the grid from GridManager
+        // Initialize PathFinding with the grid from GridManager
         TileState[,] grid = _gridManager.GetGrid();
         _pathFinding = new PathFinding(grid);
         
-        //Find Home
+        // Find Home
         _homeTile = _pathFinding.FindTile(TileState.TileType.Home);
         _targetTile = _pathFinding.FindTile(TileState.TileType.Target);
+
+        // Run Dijkstra and log the result
+        var path = _pathFinding.Dijkstra(_homeTile, _targetTile);
+        if (path != null && path.Count > 0)
+        {
+            string pathOutput = string.Join(" -> ", path.ConvertAll(tile => tile.GridPosition.ToString()));
+            Debug.Log($"Shortest path found: {pathOutput}");
+        }
+        else
+        {
+            Debug.Log("No path found between the home tile and target tile.");
+        }
     }
 
     // Update is called once per frame
@@ -36,7 +49,5 @@ public class Program : MonoBehaviour
     {
         // Optionally use this to implement any logic that needs to run every frame
         Debug.Log($"Program Update tick..., home tile: {_homeTile.GridPosition}, target tile: {_targetTile.GridPosition}");
-   
-        
     }
 }

@@ -33,7 +33,17 @@ public class TileState : MonoBehaviour
     public Color blackColor = Color.black;
 
     // Pathfinding attributes
+    
     private float GCost { get; set; } // Cost from start to this node
+
+    public float GetGCost()
+    {
+        return GCost;
+    }
+    public void SetGCost(float gCost)
+    {
+        GCost = gCost;
+    }
     private float HCost { get; set; } // Heuristic cost (for A*)
     public float FCost => GCost + HCost; // Total cost (for A*)
     private TileState Parent { get; set; } // Parent tile (to trace the path)
@@ -92,7 +102,6 @@ public class TileState : MonoBehaviour
                 GCost = Mathf.Infinity;
                 HCost = Mathf.Infinity;
                 Parent = null;
-                UpdateTileText("inf");
                 break;
 
             case TileType.Home:
@@ -100,54 +109,72 @@ public class TileState : MonoBehaviour
                 GCost = 0; // Starting point should have 0 cost
                 HCost = 0;
                 Parent = null;
-                UpdateTileText("0");
                 break;
 
             case TileType.NoEntry:
                 _spriteRenderer.color = blackColor;
-                GCost = float.MaxValue; // NoEntry is impassable
-                HCost = float.MaxValue;
+                GCost = -1.0f; // No entry tiles should have negative cost
+                HCost = -1.0f; // remember this when doing checks at pathfinding time
                 Parent = null;
-                UpdateTileText("n/a");
                 break;
 
             case TileType.Visited:
                 _spriteRenderer.color = greenColor;
-                UpdateTileText(GCost.ToString("0.0"));
                 break;
 
             case TileType.Path:
                 _spriteRenderer.color = blueColor;
-                UpdateTileText(GCost.ToString("0.0"));
                 break;
 
             case TileType.Target:
                 _spriteRenderer.color = targetColor;
                 GCost = 0; // Ensure the target starts with default values
                 HCost = 0;
-                UpdateTileText(GCost.ToString("Target"));
                 break;
         }
+        UpdateTileText();
     }
 
     // Method to update the text on the tile
-    private void UpdateTileText(string text)
+    private void UpdateTileText()
     {
         if (_textMesh != null)
         {
-            _textMesh.text = text; // Set the text displayed on the tile
+            // Check the state of GCost and display accordingly
+            if (GCost == Mathf.Infinity)
+            {
+                _textMesh.text = "inf"; // Show "infinity" for unvisited tiles
+            }
+            else if (GCost < 0.0f)
+            {
+                _textMesh.color = whiteColor;
+                _textMesh.text = "N/A"; // Show "N/A" for no-entry tiles
+            }
+            else
+            {
+                _textMesh.text = GCost.ToString("0.0"); // Show the actual GCost value
+            }
         }
     }
-    
+    public void UpdateCosts(float gCost, float hCost)
+    {
+        GCost = gCost;
+        HCost = hCost;
+
+        // Update the displayed text to reflect the new GCost
+        UpdateTileText();
+    }
     public void UpdateVisualFeedback(float gCost)
     {
-        _spriteRenderer.color = Color.red; // Temporary color to show processing
-        UpdateTileText(gCost.ToString("0.0")); // Show GCost
+        GCost = gCost; // Update GCost dynamically for visual purposes
+        _spriteRenderer.color = Color.red; // Temporary visual feedback
+        UpdateTileText(); // Automatically update the text based on the new GCost
     }
 
     public void ClearVisualFeedback()
     {
-        _spriteRenderer.color = Color.white; // Restore to default color
-        UpdateTileText("inf");
+        // Restore to default color based on state
+        _spriteRenderer.color = (_spriteRenderer.color == Color.red) ? whiteColor : _spriteRenderer.color;
+        UpdateTileText(); // Ensure the text still reflects the numeric GCost
     }
 }
