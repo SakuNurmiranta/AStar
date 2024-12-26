@@ -8,11 +8,12 @@ public class PathFinding
     private List<TileState> _closedSet;
     private TileState _endTile;
     private TileState _currentTile;
-    
+
     public PathFinding(TileState[,] grid)
     {
         _grid = grid;
     }
+
     public void InitializeDijkstra(TileState startTile, TileState endTile)
     {
         if (startTile == null || endTile == null)
@@ -31,6 +32,7 @@ public class PathFinding
         startTile.SetParent(null);
         startTile.SetGCost(0);
     }
+
     public bool StepDijkstra()
     {
         // If there are no more tiles to process, the algorithm is done
@@ -81,7 +83,7 @@ public class PathFinding
         if (_endTile.GetParent() == null) return null; // No path exists
         return ReconstructPath(_endTile);
     }
-    
+
     // Find the first tile with the specified state in the grid
     public TileState FindTile(TileState.TileType tileType)
     {
@@ -97,17 +99,17 @@ public class PathFinding
         // If no such tile is found, return null
         return null;
     }
-    
+
     public List<TileState> GetNeighbors(TileState queryTile)
     {
         if (queryTile == null) return null;
-        
+
         //list to store
         List<TileState> neighbors = new List<TileState>();
-        
+
         //gridPos of queryTile
         Vector2Int gridPos = queryTile.GridPosition;
-        
+
         //Grid boundaries for loops
         int gWidth = _grid.GetLength(0);
         int gHeight = _grid.GetLength(1);
@@ -118,11 +120,11 @@ public class PathFinding
             {
                 //skip queryTile itself
                 if (x == 0 && y == 0) continue;
-                
+
                 //calculate gridPos of potential neighbour
                 int neighbourX = gridPos.x + x;
                 int neighbourY = gridPos.y + y;
-                
+
                 //check to see if there is land where you are looking at
                 if (neighbourX >= 0 && neighbourX < gWidth && neighbourY >= 0 && neighbourY < gHeight)
                 {
@@ -133,13 +135,13 @@ public class PathFinding
                         Debug.Log("a NoEntry skipped from neighbour search");
                         continue;
                     }
-                    
+
                     //add a valid neighbour to the list
                     neighbors.Add(neighbourTile);
                 }
             }
         }
-        
+
         return neighbors;
     }
 
@@ -150,7 +152,7 @@ public class PathFinding
 
         // Initialize the path list to store the final shortest path
         List<TileState> openSet = new List<TileState>();
-        
+
         // Initialize the closed set to store the tiles that have already been evaluated
         List<TileState> closedSet = new List<TileState>();
 
@@ -174,7 +176,7 @@ public class PathFinding
             {
                 return ReconstructPath(endTile);
             }
-            
+
             openSet.Remove(current);
             closedSet.Add(current);
             // Pseudocode/Actual Steps:
@@ -185,10 +187,10 @@ public class PathFinding
             {
                 // Skip this neighbor if it is already in the closed set
                 if (closedSet.Contains(neighbor)) continue;
-                
+
                 // Calculate tentative gCost
                 float tentativeGCost = current.GetGCost() + GetDistance(current, neighbor);
-                
+
                 // If the tentative gCost is lower than the neighbor's current gCost, or it's not in the open set
                 if (tentativeGCost < neighbor.GetGCost() || !openSet.Contains(neighbor))
                 {
@@ -206,6 +208,7 @@ public class PathFinding
                 }
             }
         }
+
         return null;
     }
 
@@ -219,8 +222,10 @@ public class PathFinding
                 lowest = tile;
             }
         }
+
         return lowest;
     }
+
     private List<TileState> ReconstructPath(TileState endTile)
     {
         List<TileState> path = new List<TileState>();
@@ -237,11 +242,94 @@ public class PathFinding
         path.Reverse();
         return path;
     }
-    
+
     private float GetDistance(TileState a, TileState b)
     {
         // Example: Use Manhattan distance for a grid
         return Mathf.Abs(a.GridPosition.x - b.GridPosition.x) + Mathf.Abs(a.GridPosition.y - b.GridPosition.y);
     }
-}
 
+    private List<TileState> _aStarOpenSet;
+    private HashSet<TileState> _aStarClosedSet;
+
+    public void InitializeAStar(TileState startTile, TileState endTile)
+    {
+        if (startTile == null || endTile == null)
+        {
+            Debug.LogError("Start or End tile is null, cannot run A*!");
+            return;
+        }
+
+        _aStarOpenSet = new List<TileState>();
+        _aStarClosedSet = new HashSet<TileState>();
+        _endTile = endTile;
+
+        startTile.SetGCost(0);
+        startTile.SetHCost(GetHeuristicDistance(startTile, endTile));
+        startTile.SetParent(null);
+
+        _aStarOpenSet.Add(startTile);
+    }
+
+    public bool StepAStar()
+    {
+        if (_aStarOpenSet == null || _aStarOpenSet.Count == 0)
+        {
+            Debug.Log("Open set is empty. A* failed to find a path.");
+            return true; // Algorithm has completed but no path
+        }
+
+        // Get the tile with the lowest F cost
+        TileState currentTile = _aStarOpenSet[0];
+        foreach (TileState tile in _aStarOpenSet)
+        {
+            if (tile.GetFCost() < currentTile.GetFCost() ||
+                (tile.GetFCost() == currentTile.GetFCost() && tile.GetHCost() < currentTile.GetHCost()))
+            {
+                currentTile = tile;
+            }
+        }
+
+        // If we reached the target, algorithm is complete
+        if (currentTile == _endTile)
+        {
+            Debug.Log("Path found!");
+            return true; // A* is done
+        }
+
+        // Move current tile from open to closed set
+        _aStarOpenSet.Remove(currentTile);
+        _aStarClosedSet.Add(currentTile);
+        currentTile.SetTileType(TileState.TileType.Visited); // Optional visual feedback
+
+        // Process neighbors
+        foreach (TileState neighbor in GetNeighbors(currentTile))
+        {
+            if (!neighbor.IsWalkable || _aStarClosedSet.Contains(neighbor))
+                continue;
+
+            float tentativeGCost = currentTile.GetGCost() + GetDistance(currentTile, neighbor);
+
+            if (tentativeGCost < neighbor.GetGCost() || !_aStarOpenSet.Contains(neighbor))
+            {
+                neighbor.SetGCost(tentativeGCost);
+                neighbor.SetHCost(GetHeuristicDistance(neighbor, _endTile));
+                neighbor.SetParent(currentTile);
+
+                if (!_aStarOpenSet.Contains(neighbor))
+                {
+                    _aStarOpenSet.Add(neighbor);
+                    neighbor.SetTileType(TileState.TileType.Visited); // Optional for visualization
+                }
+            }
+        }
+
+        return false; // A* needs to continue
+    }
+
+// Heuristic function (Manhattan distance)
+    private float GetHeuristicDistance(TileState a, TileState b)
+    {
+        return Mathf.Abs(a.GridPosition.x - b.GridPosition.x) + Mathf.Abs(a.GridPosition.y - b.GridPosition.y);
+    }
+}

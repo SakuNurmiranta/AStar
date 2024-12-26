@@ -45,7 +45,22 @@ public class TileState : MonoBehaviour
         GCost = gCost;
     }
     private float HCost { get; set; } // Heuristic cost (for A*)
+
+    public float GetHCost()
+    {
+        return HCost;
+    }
+    public void SetHCost(float hCost)
+    {
+        HCost = hCost;
+    }
     public float FCost => GCost + HCost; // Total cost (for A*)
+
+    public float GetFCost()
+    {
+        return FCost;
+    }
+    
     private TileState Parent { get; set; } // Parent tile (to trace the path)
     // Public getter for Parent
     public TileState GetParent()
