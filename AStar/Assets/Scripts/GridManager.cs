@@ -10,12 +10,28 @@ public class GridManager : MonoBehaviour
     private TileState[,] _grid; // Grid data structure
     private TileState _startTile; // Home tile
     private TileState _targetTile; // Target tile
-    
-
-    void Start()
+    public TileState[,] GetGrid()
     {
-        GenerateGrid(); // Generate the grid
-        RandomlySetTheBoard(); // Set the board logic
+        return _grid;
+    }
+
+    public TileState GetStartTile()
+    {
+        return _startTile;
+    }
+
+    public TileState GetTargetTile()
+    {
+        return _targetTile;
+    }
+
+    public System.Action GetGenerateGrid()
+    {
+        return GenerateGrid;
+    } 
+    public System.Action GetRandomlySetTheBoard()
+    {
+        return RandomlySetTheBoard;
     }
 
     // Generate the grid dynamically

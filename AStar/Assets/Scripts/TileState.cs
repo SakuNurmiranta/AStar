@@ -6,7 +6,6 @@ public class TileState : MonoBehaviour
     {
         Unvisited,
         Home,
-        Processing,
         Visited,
         Path,
         NoEntry,
@@ -18,14 +17,16 @@ public class TileState : MonoBehaviour
 
     // Current state of the tile
     private TileType CurrentTileType { get; set; }
-
+    public TileType GetTileType()
+    {
+        return CurrentTileType;
+    }
     // Reference to the SpriteRenderer
     private SpriteRenderer _spriteRenderer;
 
     // Colors for different states
     public Color homeColor = Color.blue;
     public Color whiteColor = Color.white;
-    public Color redColor = Color.red;
     public Color greenColor = Color.green;
     public Color blueColor = Color.cyan;
     public Color targetColor = Color.yellow;
@@ -36,6 +37,16 @@ public class TileState : MonoBehaviour
     private float HCost { get; set; } // Heuristic cost (for A*)
     public float FCost => GCost + HCost; // Total cost (for A*)
     private TileState Parent { get; set; } // Parent tile (to trace the path)
+    // Public getter for Parent
+    public TileState GetParent()
+    {
+        return Parent;
+    }
+    // Public setter for Parent
+    public void SetParent(TileState parent)
+    {
+        Parent = parent;
+    }
     public bool IsWalkable => CurrentTileType != TileType.NoEntry; // Check if the tile is a valid node in pathfinding
 
     // New: Grid position of this tile in the grid
@@ -59,8 +70,16 @@ public class TileState : MonoBehaviour
     // Public method to set the current tile type
     public void SetTileType(TileType type)
     {
+        // Prevent the Home or Target tiles from being overwritten
+        if (CurrentTileType == TileType.Home || CurrentTileType == TileType.Target || CurrentTileType == TileType.NoEntry)
+        {
+            // Optional: Log a warning if there’s an unintended overwrite attempt
+            Debug.LogWarning($"Attempted to overwrite a {CurrentTileType} tile at position {GridPosition}.");
+            return;
+        }
+
         CurrentTileType = type; // Update the tile's type
-        UpdateTileStatus(); // Update the color and text based on the new type
+        UpdateTileStatus(); // Update visuals
     }
 
     // Private method to update the tile's color and text
@@ -92,11 +111,6 @@ public class TileState : MonoBehaviour
                 UpdateTileText("n/a");
                 break;
 
-            case TileType.Processing:
-                _spriteRenderer.color = redColor;
-                UpdateTileText(GCost.ToString("0.0")); // Show precise cost
-                break;
-
             case TileType.Visited:
                 _spriteRenderer.color = greenColor;
                 UpdateTileText(GCost.ToString("0.0"));
@@ -111,7 +125,7 @@ public class TileState : MonoBehaviour
                 _spriteRenderer.color = targetColor;
                 GCost = 0; // Ensure the target starts with default values
                 HCost = 0;
-                UpdateTileText(GCost.ToString("0"));
+                UpdateTileText(GCost.ToString("Target"));
                 break;
         }
     }
@@ -123,5 +137,17 @@ public class TileState : MonoBehaviour
         {
             _textMesh.text = text; // Set the text displayed on the tile
         }
+    }
+    
+    public void UpdateVisualFeedback(float gCost)
+    {
+        _spriteRenderer.color = Color.red; // Temporary color to show processing
+        UpdateTileText(gCost.ToString("0.0")); // Show GCost
+    }
+
+    public void ClearVisualFeedback()
+    {
+        _spriteRenderer.color = Color.white; // Restore to default color
+        UpdateTileText("inf");
     }
 }
