@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 public class Program : MonoBehaviour
 {
@@ -31,23 +33,43 @@ public class Program : MonoBehaviour
         _homeTile = _pathFinding.FindTile(TileState.TileType.Home);
         _targetTile = _pathFinding.FindTile(TileState.TileType.Target);
 
-        // Run Dijkstra and log the result
-        var path = _pathFinding.Dijkstra(_homeTile, _targetTile);
-        if (path != null && path.Count > 0)
+        if (_homeTile == null || _targetTile == null)
         {
-            string pathOutput = string.Join(" -> ", path.ConvertAll(tile => tile.GridPosition.ToString()));
-            Debug.Log($"Shortest path found: {pathOutput}");
+            Debug.LogError("Home or Target tile not found!");
+            return;
+        }
+
+        // Start the Dijkstra coroutine
+        StartCoroutine(VisualizePathFinding());
+    }
+    private IEnumerator VisualizePathFinding()
+    {
+        _pathFinding.InitializeDijkstra(_homeTile, _targetTile);
+
+        bool isComplete = false;
+        while (!isComplete)
+        {
+            // Execute one step of the algorithm
+            isComplete = _pathFinding.StepDijkstra();
+
+            // Yield for visual updates
+            yield return new WaitForSeconds(0.01f); // Adjust timing for desired visual speed
+        }
+
+        // Retrieve and display the completed path
+        List<TileState> path = _pathFinding.GetFinalPath();
+        if (path != null)
+        {
+            Debug.Log("Path found!");
+            foreach (TileState tile in path)
+            {
+                tile.SetTileType(TileState.TileType.Path); // Highlight the final path
+            }
         }
         else
         {
-            Debug.Log("No path found between the home tile and target tile.");
+            Debug.Log("No path found.");
         }
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        // Optionally use this to implement any logic that needs to run every frame
-        Debug.Log($"Program Update tick..., home tile: {_homeTile.GridPosition}, target tile: {_targetTile.GridPosition}");
-    }
 }
+

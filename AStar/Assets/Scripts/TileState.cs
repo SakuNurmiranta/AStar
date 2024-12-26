@@ -84,7 +84,7 @@ public class TileState : MonoBehaviour
         if (CurrentTileType == TileType.Home || CurrentTileType == TileType.Target || CurrentTileType == TileType.NoEntry)
         {
             // Optional: Log a warning if there’s an unintended overwrite attempt
-            Debug.LogWarning($"Attempted to overwrite a {CurrentTileType} tile at position {GridPosition}.");
+            //Debug.LogWarning($"Attempted to overwrite a {CurrentTileType} tile at position {GridPosition}.");
             return;
         }
 

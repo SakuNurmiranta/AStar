@@ -4,12 +4,84 @@ using UnityEngine;
 public class PathFinding
 {
     private TileState[,] _grid; // Reference to the grid
-
+    private List<TileState> _openSet;
+    private List<TileState> _closedSet;
+    private TileState _endTile;
+    private TileState _currentTile;
+    
     public PathFinding(TileState[,] grid)
     {
         _grid = grid;
     }
+    public void InitializeDijkstra(TileState startTile, TileState endTile)
+    {
+        if (startTile == null || endTile == null)
+        {
+            Debug.LogError("Start or End tile is null, cannot run Dijkstra!");
+            return;
+        }
 
+        // Initialize variables for the algorithm
+        _openSet = new List<TileState>();
+        _closedSet = new List<TileState>();
+        _endTile = endTile;
+
+        _openSet.Add(startTile);
+
+        startTile.SetParent(null);
+        startTile.SetGCost(0);
+    }
+    public bool StepDijkstra()
+    {
+        // If there are no more tiles to process, the algorithm is done
+        if (_openSet.Count == 0) return true;
+
+        // Get the tile with the lowest G cost
+        _currentTile = GetLowestGCost(_openSet);
+
+        // Mark the current tile as visited visually
+        _currentTile.SetTileType(TileState.TileType.Visited);
+
+        // If we reached the end tile, mark it and stop
+        if (_currentTile == _endTile)
+        {
+            _endTile.SetTileType(TileState.TileType.Target);
+            Debug.Log("Pathfinding complete!");
+            return true;
+        }
+
+        _openSet.Remove(_currentTile);
+        _closedSet.Add(_currentTile);
+
+        // Process neighbors
+        List<TileState> neighbors = GetNeighbors(_currentTile);
+        foreach (TileState neighbor in neighbors)
+        {
+            if (_closedSet.Contains(neighbor)) continue;
+
+            float tentativeGCost = _currentTile.GetGCost() + GetDistance(_currentTile, neighbor);
+            if (tentativeGCost < neighbor.GetGCost() || !_openSet.Contains(neighbor))
+            {
+                neighbor.SetGCost(tentativeGCost);
+                neighbor.SetParent(_currentTile);
+
+                if (!_openSet.Contains(neighbor))
+                {
+                    _openSet.Add(neighbor);
+                    neighbor.SetTileType(TileState.TileType.Visited); // Update neighbor state visually
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public List<TileState> GetFinalPath()
+    {
+        if (_endTile.GetParent() == null) return null; // No path exists
+        return ReconstructPath(_endTile);
+    }
+    
     // Find the first tile with the specified state in the grid
     public TileState FindTile(TileState.TileType tileType)
     {
