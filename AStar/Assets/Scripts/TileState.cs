@@ -1,7 +1,7 @@
 using UnityEngine;
-
 public class TileState : MonoBehaviour
 {
+    // Different states for the tile are handled by this class
     public enum TileType
     {
         Unvisited,
@@ -32,10 +32,8 @@ public class TileState : MonoBehaviour
     public Color targetColor = Color.yellow;
     public Color blackColor = Color.black;
 
-    // Pathfinding attributes
-    
+    // Pathfinding attributes with getters and setters
     private float GCost { get; set; } // Cost from start to this node
-
     public float GetGCost()
     {
         return GCost;
@@ -45,7 +43,6 @@ public class TileState : MonoBehaviour
         GCost = gCost;
     }
     private float HCost { get; set; } // Heuristic cost (for A*)
-
     public float GetHCost()
     {
         return HCost;
@@ -55,12 +52,10 @@ public class TileState : MonoBehaviour
         HCost = hCost;
     }
     public float FCost => GCost + HCost; // Total cost (for A*)
-
     public float GetFCost()
     {
         return FCost;
     }
-    
     private TileState Parent { get; set; } // Parent tile (to trace the path)
     // Public getter for Parent
     public TileState GetParent()
@@ -98,15 +93,12 @@ public class TileState : MonoBehaviour
         // Prevent the Home or Target tiles from being overwritten
         if (CurrentTileType == TileType.Home || CurrentTileType == TileType.Target || CurrentTileType == TileType.NoEntry)
         {
-            // Optional: Log a warning if there’s an unintended overwrite attempt
-            //Debug.LogWarning($"Attempted to overwrite a {CurrentTileType} tile at position {GridPosition}.");
             return;
         }
 
         CurrentTileType = type; // Update the tile's type
         UpdateTileStatus(); // Update visuals
     }
-
     // Private method to update the tile's color and text
     private void UpdateTileStatus()
     {
@@ -149,7 +141,6 @@ public class TileState : MonoBehaviour
         }
         UpdateTileText();
     }
-
     // Method to update the text on the tile
     private void UpdateTileText()
     {
@@ -158,7 +149,7 @@ public class TileState : MonoBehaviour
             // Check the state of GCost and display accordingly
             if (GCost == Mathf.Infinity)
             {
-                _textMesh.text = "inf"; // Show "infinity" for unvisited tiles
+                _textMesh.text = "inf"; // Show "inf" for unvisited tiles
             }
             else if (GCost < 0.0f)
             {
@@ -167,29 +158,8 @@ public class TileState : MonoBehaviour
             }
             else
             {
-                _textMesh.text = GCost.ToString("0.0"); // Show the actual GCost value
+                _textMesh.text = FCost.ToString("0.0"); // Show the actual FCost value
             }
         }
-    }
-    public void UpdateCosts(float gCost, float hCost)
-    {
-        GCost = gCost;
-        HCost = hCost;
-
-        // Update the displayed text to reflect the new GCost
-        UpdateTileText();
-    }
-    public void UpdateVisualFeedback(float gCost)
-    {
-        GCost = gCost; // Update GCost dynamically for visual purposes
-        _spriteRenderer.color = Color.red; // Temporary visual feedback
-        UpdateTileText(); // Automatically update the text based on the new GCost
-    }
-
-    public void ClearVisualFeedback()
-    {
-        // Restore to default color based on state
-        _spriteRenderer.color = (_spriteRenderer.color == Color.red) ? whiteColor : _spriteRenderer.color;
-        UpdateTileText(); // Ensure the text still reflects the numeric GCost
     }
 }

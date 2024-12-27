@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+// Main class for the A* Pathfinding algorithm
+
 public class Program : MonoBehaviour
 {
-    private GridManager _gridManager;
-    private PathFinding _pathFinding;
-    private TileState _homeTile;
-    private TileState _targetTile;
+    private GridManager _gridManager; //GridManager handles setting up the grid
+    private PathFinding _pathFinding; //PathFinding handles the A* algorithm
+    private TileState _homeTile; //Home tile
+    private TileState _targetTile; //Target tile
 
     void Start()
     {
@@ -23,7 +26,7 @@ public class Program : MonoBehaviour
         _gridManager.GetGenerateGrid()?.Invoke();
 
         Debug.Log("Calling RandomlySetTheBoard...");
-        _gridManager.GetRandomlySetTheBoard()?.Invoke();
+        _gridManager.GetRandomlySetTheBoard()?.Invoke(); //Creates a random scenario
 
         // Initialize PathFinding with the grid from GridManager
         TileState[,] grid = _gridManager.GetGrid();
@@ -42,35 +45,7 @@ public class Program : MonoBehaviour
         // Start the A* Pathfinding Coroutine
         StartCoroutine(VisualizeAStarPathFinding());
     }
-    private IEnumerator VisualizePathFinding()
-    {
-        _pathFinding.InitializeDijkstra(_homeTile, _targetTile);
-
-        bool isComplete = false;
-        while (!isComplete)
-        {
-            // Execute one step of the algorithm
-            isComplete = _pathFinding.StepDijkstra();
-
-            // Yield for visual updates
-            yield return new WaitForSeconds(0.05f); // Adjust timing for desired visual speed
-        }
-
-        // Retrieve and display the completed path
-        List<TileState> path = _pathFinding.GetFinalPath();
-        if (path != null)
-        {
-            Debug.Log("Path found!");
-            foreach (TileState tile in path)
-            {
-                tile.SetTileType(TileState.TileType.Path); // Highlight the final path
-            }
-        }
-        else
-        {
-            Debug.Log("No path found.");
-        }
-    }
+    
     private IEnumerator VisualizeAStarPathFinding()
     {
         // Initialize A* algorithm
@@ -83,7 +58,7 @@ public class Program : MonoBehaviour
             isComplete = _pathFinding.StepAStar();
 
             // Delay for visualization
-            yield return new WaitForSeconds(0.01f); // Adjust timing for desired speed
+            yield return new WaitForSeconds(0.04f); // Adjust timing for desired speed
         }
 
         // Retrieve and display the completed path

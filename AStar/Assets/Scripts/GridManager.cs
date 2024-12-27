@@ -10,25 +10,17 @@ public class GridManager : MonoBehaviour
     private TileState[,] _grid; // Grid data structure
     private TileState _startTile; // Home tile
     private TileState _targetTile; // Target tile
+
     public TileState[,] GetGrid()
     {
         return _grid;
     }
 
-    public TileState GetStartTile()
-    {
-        return _startTile;
-    }
-
-    public TileState GetTargetTile()
-    {
-        return _targetTile;
-    }
-
     public System.Action GetGenerateGrid()
     {
         return GenerateGrid;
-    } 
+    }
+
     public System.Action GetRandomlySetTheBoard()
     {
         return RandomlySetTheBoard;
@@ -63,86 +55,86 @@ public class GridManager : MonoBehaviour
             }
         }
     }
-    
+
 
     // Randomly initialize the board setup
-private void RandomlySetTheBoard()
-{
-    // Step 1: Reset all tiles to Unvisited
-    foreach (var tile in _grid)
+    private void RandomlySetTheBoard()
     {
-        if (tile != null)
+        // Step 1: Reset all tiles to Unvisited
+        foreach (var tile in _grid)
         {
-            tile.SetTileType(TileState.TileType.Unvisited);
-        }
-    }
-
-    // Step 2: Define Home and Target tiles
-    bool isHorizontal = Random.Range(0, 2) == 0;
-
-    int homeX, homeY, targetX, targetY;
-
-    if (isHorizontal)
-    {
-        homeX = 0;
-        homeY = Random.Range(0, gridHeight); // Home placed along the left edge
-        targetX = gridWidth - 1;
-        targetY = Random.Range(0, gridHeight); // Target placed along the right edge
-    }
-    else
-    {
-        homeX = Random.Range(0, gridWidth); // Home placed along the bottom edge
-        homeY = 0;
-        targetX = Random.Range(0, gridWidth); // Target placed along the top edge
-        targetY = gridHeight - 1;
-    }
-
-    _startTile = _grid[homeX, homeY];
-    _targetTile = _grid[targetX, targetY];
-
-    _startTile.SetTileType(TileState.TileType.Home);
-    _targetTile.SetTileType(TileState.TileType.Target);
-
-    // Step 3: Place NoEntry tiles to block the path between Home and Target
-    if (isHorizontal)
-    {
-        // Block horizontally by adding NoEntry tiles in the middle columns between Home and Target
-        int centerX = gridWidth / 2;
-
-        for (int x = centerX - 1; x <= centerX + 1; x++) // Block 3 columns at the center
-        {
-            for (int y = Mathf.Min(homeY, targetY); y <= Mathf.Max(homeY, targetY); y++)
+            if (tile != null)
             {
-                // Skip if it's the Home or Target tile
-                if ((x == homeX && y == homeY) || (x == targetX && y == targetY))
-                    continue;
+                tile.SetTileType(TileState.TileType.Unvisited);
+            }
+        }
 
-                if (_grid[x, y] != null)
+        // Step 2: Define Home and Target tiles
+        bool isHorizontal = Random.Range(0, 2) == 0;
+
+        int homeX, homeY, targetX, targetY;
+
+        if (isHorizontal)
+        {
+            homeX = 0;
+            homeY = Random.Range(0, gridHeight); // Home placed along the left edge
+            targetX = gridWidth - 1;
+            targetY = Random.Range(0, gridHeight); // Target placed along the right edge
+        }
+        else
+        {
+            homeX = Random.Range(0, gridWidth); // Home placed along the bottom edge
+            homeY = 0;
+            targetX = Random.Range(0, gridWidth); // Target placed along the top edge
+            targetY = gridHeight - 1;
+        }
+
+        _startTile = _grid[homeX, homeY];
+        _targetTile = _grid[targetX, targetY];
+
+        _startTile.SetTileType(TileState.TileType.Home);
+        _targetTile.SetTileType(TileState.TileType.Target);
+
+        // Step 3: Place NoEntry tiles to block the path between Home and Target
+        if (isHorizontal)
+        {
+            // Block horizontally by adding NoEntry tiles in the middle columns between Home and Target
+            int centerX = gridWidth / 2;
+
+            for (int x = centerX - 1; x <= centerX + 1; x++) // Block 3 columns at the center
+            {
+                for (int y = Mathf.Min(homeY, targetY); y <= Mathf.Max(homeY, targetY); y++)
                 {
-                    _grid[x, y].SetTileType(TileState.TileType.NoEntry);
+                    // Skip if it's the Home or Target tile
+                    if ((x == homeX && y == homeY) || (x == targetX && y == targetY))
+                        continue;
+
+                    if (_grid[x, y] != null)
+                    {
+                        _grid[x, y].SetTileType(TileState.TileType.NoEntry);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Block vertically by adding NoEntry tiles in the middle rows between Home and Target
+            int centerY = gridHeight / 2;
+
+            for (int y = centerY - 1; y <= centerY + 1; y++) // Block 3 rows at the center
+            {
+                for (int x = Mathf.Min(homeX, targetX); x <= Mathf.Max(homeX, targetX); x++)
+                {
+                    // Skip if it's the Home or Target tile
+                    if ((x == homeX && y == homeY) || (x == targetX && y == targetY))
+                        continue;
+
+                    if (_grid[x, y] != null)
+                    {
+                        _grid[x, y].SetTileType(TileState.TileType.NoEntry);
+                    }
                 }
             }
         }
     }
-    else
-    {
-        // Block vertically by adding NoEntry tiles in the middle rows between Home and Target
-        int centerY = gridHeight / 2;
-
-        for (int y = centerY - 1; y <= centerY + 1; y++) // Block 3 rows at the center
-        {
-            for (int x = Mathf.Min(homeX, targetX); x <= Mathf.Max(homeX, targetX); x++)
-            {
-                // Skip if it's the Home or Target tile
-                if ((x == homeX && y == homeY) || (x == targetX && y == targetY))
-                    continue;
-
-                if (_grid[x, y] != null)
-                {
-                    _grid[x, y].SetTileType(TileState.TileType.NoEntry);
-                }
-            }
-        }
-    }
-}
 }
