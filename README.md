@@ -1,2 +1,2 @@
 # AStar
- Creating AStar alghorithm as a school project (Unity)
+ Creating AStar algorithm as a school project (Unity)
